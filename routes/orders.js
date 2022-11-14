@@ -1,6 +1,6 @@
 const { default: mongoose } = require('mongoose');
 
-const { Order } = reuqire('../models')
+const { Order } = require('../models')
 // mongoose
 mongoose.connect('mongodb://localhost:27017/api-fullstack');
 

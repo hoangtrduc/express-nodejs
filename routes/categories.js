@@ -15,9 +15,10 @@ const router = express.Router();
 /* GET users listing. */
 router.get('/', function (req, res, next) {
     try {
-        Category.find().then((result) => {
-            res.send(result);
-        })
+        Category.find()
+            .then((result) => {
+                res.send(result);
+            })
             .catch((err) => {
                 res.status(400).send({ message: err.message });
             });

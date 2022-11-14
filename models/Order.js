@@ -24,7 +24,7 @@ const orderSchema = new Schema({
     createDate: {
         type: Date,
         required: true,
-        default: Date.now,
+        default: Date.now(),
     },
 
     shippedDate: {
@@ -32,6 +32,7 @@ const orderSchema = new Schema({
         validate: {
             validator: function (value) {
                 if (!value) return true;
+
                 if (value < this.createdDate) {
                     return false;
                 }

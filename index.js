@@ -14,7 +14,7 @@ const customersRouter = require('./routes/customers');
 const employeesRouter = require('./routes/employees');
 const productsRouter = require('./routes/products');
 const ordersRouter = require('./routes/orders');
-
+const connectDb = require('./Services/connectDBService');
 
 // HTTP logger
 app.use(morgan('combined'));
@@ -24,6 +24,9 @@ app.use(
         origin: '*',
     }),
 );
+
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 // router
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -39,6 +42,9 @@ app.use('/products', productsRouter);
 app.use(function (req, res, next) {
     next(createError(400));
 })
+
+// connect database
+connectDb();
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
