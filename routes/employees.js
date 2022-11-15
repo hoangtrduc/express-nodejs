@@ -83,15 +83,15 @@ router.delete('/:id', function (req, res, next) {
     try {
         const { id } = req.params;
         Employee.findByIdAndDelete(id)
-        then((result) => {
-            res.send(result);
-        })
+            .then((result) => {
+                res.send(result);
+            })
             .catch((err) => {
                 res.status(400).send({ message: err.message });
             })
     } catch (error) {
         res.sendStatus(500);
     }
-})
+});
 
 module.exports = router;
