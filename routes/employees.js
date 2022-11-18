@@ -5,6 +5,7 @@ const { Employee } = require('../models');
 // MONGOOSE
 mongoose.connect('mongodb://localhost:27017/api-fullstack');
 
+const { findDocuments } = require('../helpers/MongoDbHelper');
 
 const express = require('express');
 const router = express.Router();
@@ -93,5 +94,26 @@ router.delete('/:id', function (req, res, next) {
         res.sendStatus(500);
     }
 });
+
+// question 14
+router.get('/question/14', function (req, res, next) {
+    const today = new Date();
+    const eqDay = { $eq: [{ $dayOfMonth: '$birthday' }, { $dayOfMonth: today }] };
+    const eqMonth = { $eq: [{ $month: '$birthday' }, { $month: today }] };
+
+    const query = {
+        $expr: {
+            $and: [eqDay, eqMonth],
+        },
+    };
+    findDocuments({ query }, 'employees')
+        .then((result) => {
+            res.json(result)
+        })
+        .catch((err) => {
+            res.status(500).json(err)
+        })
+})
+
 
 module.exports = router;

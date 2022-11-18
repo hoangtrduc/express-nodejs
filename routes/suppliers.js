@@ -6,6 +6,7 @@ mongoose.connect('mongodb://localhost:27017/api-fullstack');
 
 
 const express = require('express');
+const { findDocuments } = require('../helpers/MongoDbHelper');
 const router = express.Router();
 
 // GET
@@ -93,5 +94,19 @@ router.delete('/:id', function (req, res, next) {
         res.sendStatus(500);
     }
 });
+// question 15
+router.get('/question/15', function (req, res, next) {
+    findDocuments({
+        query: {
+            name: { $in: ['SONY', 'SAMSUNG', 'TOSHIBA', 'APPLE'] },
+        }
+    }, 'suppliers')
+        .then((result) => {
+            res.json(result)
+        })
+        .catch((err) => {
+            res.status(500).json(err)
+        })
+})
 
 module.exports = router;

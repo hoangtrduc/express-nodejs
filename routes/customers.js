@@ -7,6 +7,8 @@ mongoose.connect('mongodb://localhost:27017/api-fullstack');
 
 const express = require('express');
 const router = express.Router();
+const { findDocuments } = require('../helpers/MongoDbHelper');
+
 
 //GET
 router.get('/', function (req, res, next) {
@@ -50,11 +52,10 @@ router.post('/', function (res, req, next) {
             .then((result) => {
                 res.send(result);
             })
-            .catch((err) => {
-                console.log(err);
-                res.status(400).send({ message: err.message });
+            .catch((error) => {
+                res.status(400).send({ message: error.message });
             });
-    } catch (error) {
+    } catch (err) {
         res.sendStatus(500);
     }
 });
@@ -95,5 +96,60 @@ router.delete('/:id', function (req, res, next) {
         res.sendStatus(500);
     }
 });
+
+// --------------------------------------
+// question 4
+router.get('/questions/4', function (req, res) {
+    const text = 'hai chau';
+    const query = { address: new RegExp(`${text}`) };
+
+    findDocuments({ query }, 'customers')
+        .then((result) => {
+            res.json(result);
+        })
+        .catch((error) => {
+            res.status(500).json(error);
+        });
+});
+
+// question 5
+
+router.get('/questions/5', function (req, res) {
+    const query = {
+        $expr: {
+            $eq: [{ $year: '$birthday' }, 1990]
+        },
+    };
+
+    findDocuments({ query }, 'customers')
+        .then((result) => {
+            res.json(result);
+        })
+        .catch((error) => {
+            res.status(500).json(error);
+        });
+})
+
+// question 6
+
+router.get('/questions/6', function (req, res) {
+    const today = new Date();
+    const eqDay = { $eq: [{ $dayOfMonth: '$birthday' }, { $dayOfMonth: today }] };
+    const eqMonth = { $eq: [{ $month: '$birthday' }, { $month: today }] };
+
+
+    const query = {
+        $expr: {
+            $and: [eqDay, eqMonth],
+        },
+    };
+    findDocuments({ query }, 'customers')
+        .then((result) => {
+            res.json(result)
+        })
+        .catch((err) => {
+            res.status(500).json(err)
+        })
+})
 
 module.exports = router;

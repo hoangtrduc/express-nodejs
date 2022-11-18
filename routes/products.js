@@ -5,6 +5,9 @@ const { Product } = require('../models');
 mongoose.connect('mongodb://localhost:27017/api-fullstack');
 
 
+
+const { findDocuments } = require('../helpers/MongoDbHelper');
+
 const express = require('express');
 const router = express.Router();
 
@@ -95,5 +98,43 @@ router.delete('/:id', function (req, res, next) {
         res.sendStatus(500);
     }
 });
+
+// ------------------------------------------------
+// question 1
+router.get('/question/1', async (req, res, next) => {
+    try {
+        let query = { discount: { $lte: 10 } };
+        const result = await findDocuments({ query: query }, 'products');
+        res.json({ ok: true, result });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+})
+
+// question 2
+router.get('/question/2', async (req, res, next) => {
+    try {
+        let query = { stock: { $lte: 5 } };
+        const result = await findDocuments({ query: query }, 'products');
+        res.json({ ok: true, result });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+})
+
+// question 3
+router.get('/question/3', async (req, res, next) => {
+    try {
+        const s = { $subtract: [100, '$discount'] }; // (100 - 5)
+        const m = { $multiply: ['$price', s] }; // price * 95
+        const d = { $divide: [m, 100] } // price * 95 / 100
+
+        let aggregate = [{ $match: { $expr: { $lte: [d, 100000] } } }];
+        const result = await findDocuments({ aggregate }, 'products');
+        res.json({ ok: true, result })
+    } catch (error) {
+        res.status(500).json(error);
+    }
+})
 
 module.exports = router;

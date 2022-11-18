@@ -18,13 +18,13 @@ orderDetailSchema.virtual('product', {
 orderDetailSchema.set('toObject', { virtuals: true });
 // Virtuals in JSON 
 orderDetailSchema.set('toJSON', { virtuals: true });
-// ---------------------
+
 
 const orderSchema = new Schema({
-    createDate: {
+    createdDate: {
         type: Date,
         required: true,
-        default: Date.now(),
+        default: Date.now,
     },
 
     shippedDate: {
@@ -38,7 +38,7 @@ const orderSchema = new Schema({
                 }
                 return true;
             },
-            message: `Shipped date: { VALUE } is invalid`,
+            message: `Shipped date: {VALUE} is invalid!`,
         },
     },
 
@@ -47,13 +47,13 @@ const orderSchema = new Schema({
         required: true,
         default: 'CASH',
         validate: {
-            validate: (value) => {
+            validator: (value) => {
                 if (['CASH', 'CREDIT CARD'].includes(value.toUpperCase())) {
                     return true;
                 }
                 return false;
             },
-            message: `Payment type: {VALUE} is invalid`,
+            message: `Payment type: {VALUE} is invalid!`,
         },
     },
 
@@ -93,9 +93,9 @@ orderSchema.virtual('employee', {
     justOne: true,
 });
 
-// virtuals in console.log()
+// Virtuals in console.log()
 orderSchema.set('toObject', { virtuals: true });
-// virtuals in JSON 
+// Virtuals in JSON
 orderSchema.set('toJSON', { virtuals: true });
 
 const Order = model('Order', orderSchema);
