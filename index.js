@@ -1,4 +1,3 @@
-const createError = require('http-errors');
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -38,10 +37,6 @@ app.use('/employees', employeesRouter);
 app.use('/orders', ordersRouter);
 app.use('/products', productsRouter);
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    next(createError(400));
-})
 
 // connect database
 connectDb();

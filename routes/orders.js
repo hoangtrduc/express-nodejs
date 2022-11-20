@@ -51,6 +51,7 @@ router.get('/:id', function (req, res, next) {
 router.post('/', function (req, res, next) {
     try {
         const data = req.body;
+
         const newItem = new Order(data);
         newItem
             .save()
@@ -125,9 +126,12 @@ const lookupEmployee = {
 
 
 // question 7
-router.get('/question/7', function (req, res, next) {
+router.post('/questions/7', function (req, res, next) {
+    const { status } = req.body;
+
+
     const query = {
-        status: 'COMPLETED',
+        status: status,
     };
 
     findDocuments({ query }, 'orders')
