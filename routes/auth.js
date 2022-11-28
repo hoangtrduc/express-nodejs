@@ -1,73 +1,140 @@
-const express = require('express');
-const router = express.Router();
-const { validateSchema, loginSchema } = require('./schemas.yup');
+var express = require('express');
+var router = express.Router();
+
+const yup = require('yup');
+const { validateSchema } = require('../schemas');
+
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const jwtSettings = require('../constants/jwtSettings');
-const { findDocuments, findDocument } = require('../helpers/MongoDbHelper');
-
+const { findDocuments } = require('../helpers/MongoDbHelper')
 
 // req: request
-router.post('/login', async (req, res, next) => {
-    try {
-        const { username, password } = req.body;
+router.post("/login", (req, res, next) => {
+    const username = req.body.username;
+    const password = req.body.password;
 
-        const login = await findDocuments({ query: { username, password }, projection: { _id: 1, username: 1 } }, 'login');
-        if (login.length > 0) {
-            // jwt
-            var payload = {
-                uid: login[0]._id,
-                email: login[0].username,
-            };
-
-            var token = jwt.sign(payload, jwtSettings.SECRET, {
-                expiresIn: 86400, // expires in 24 hours
-                issuer: jwtSettings.ISSUER,
-                audience: jwtSettings.AUDIENCE,
-                algorithm: 'HS512',
-            });
-
-            res.status(200).json({
-                ok: true,
-                login: true,
-                payload,
-                token: token,
-            });
-            return;
-        }
-
-        res.status(401).json({
-            message: 'Unauthorized',
-        });
-    } catch (error) {
-        res.sendStatus(500);
+    console.log('* username: ', username);
+    console.log('* password: ', password);
+    if (username === "admin" && password === "123456789") {
+        res.send({ message: "Login success!" });
+        return;
     }
+
+    res.status(401).send({ message: "Login failed!" });
 });
 
+const loginSchema = yup.object({
+    body: yup.object({
+        username: yup.string().email().required(),
+        password: yup.string().required(() => {
+            return 'Lỗi...';
+        }),
+    }),
+});
 
-// CALL API JWT AUTHENTICATION
-router.get('/basic', passport.authenticate('jwt', { session: false }), function (req, res, next) {
+router.post("/login-validate", validateSchema(loginSchema), (req, res, next) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    if (username === "admin@gmail.com" && password === "123456789") {
+        res.send({ message: 'Login success!' });
+        return;
+    }
+
+    res.status(401).send({ message: 'Login failed!' });
+});
+
+const getByIdSchema = yup.object({
+    params: yup.object({
+        id: yup.number().required(),
+    }),
+});
+
+router.get('/users/:id', validateSchema(getByIdSchema), (req, res, next) => {
+    res.send('ok')
+});
+
+const findSchema = yup.object({
+    query: yup.object({
+        fullName: yup.string().required(),
+        email: yup.string().email().required(),
+    }),
+});
+
+router.get('/users-find', validateSchema(findSchema), (req, res, next) => {
+    res.send('ok')
+});
+
+// LOGIN JWT
+router.post('/login-jwt', validateSchema(loginSchema), async (req, res, next) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    console.log('* username: ', username);
+    console.log('* password: ', password);
+
+    const found = await findDocuments({
+        query: {
+            username: username,
+            password: password
+        },
+    }, 'login');
+
+    console.log(found)
+
+    if (found && found.length > 0) {
+
+        const id = found[0]._id.toString();
+        // Cấp token jwt
+        var payload = {
+            user: {
+                username: username,
+                fullName: 'End User',
+            },
+            application: 'ecommerce',
+        };
+
+        var secret = jwtSettings.SECRET;
+
+        var token = jwt.sign(payload, secret, {
+            expiresIn: 86400, // thời gian hết hạn  24h(24 x 60 x 60)
+            audience: jwtSettings.AUDIENCE,
+            issuer: jwtSettings.ISSUER,
+            subject: id, // thường dùng để kiểm tra JWT lần sau
+            algorithm: 'HS512',
+        });
+
+        res.send({ message: 'Login success!', token });
+        return;
+    }
+
+    res.status(401).send({ message: 'Login failed!' });
+});
+
+router.get('/authentication', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+    res.send('OK')
+})
+
+// CALL API HTTP BASIC AUTHENTICATION
+// ------------------------------------------------------------------------------------------------
+router.get('/basic', passport.authenticate('basic', { session: false }), function (req, res, next) {
     res.json({ ok: true });
 });
 
-// CALL API JWT AUTHENTICATION
-router.get('/jwt', passport.authenticate('jwt', { session: false }), function (req, res, next) {
-    res.json({ ok: true });
-});
-
-// GET ALL USERS WITH API-KEY
 const checkApiKey = () => {
-    return (request, response, next) => {
-        const apiKey = request.get('x-api-key');
+    // return a middleware
+    return (req, res, next) => {
+        const apiKey = req.get('x-api-key');
         if (apiKey === '147258369') {
             next();
         } else {
-            response.status(401).json({ message: 'x-api-key is invalid' });
+            res.status(401).json({ message: 'x-api-key is invalid' });
         }
     };
 };
 
-// cach 1;
+// Cách 1:
 router.get('/api-key', checkApiKey(), function (req, res, next) {
     res.json({ ok: true });
 });
@@ -115,9 +182,10 @@ const allowRoles = (...roles) => {
 // ------------------------------------------------------------------------------------------------
 // CALL API JWT AUTHENTICATION & CHECK ROLES
 // ------------------------------------------------------------------------------------------------
-router.get('/roles', passport.authenticate('jwt', { session: false }), allowRoles('administrators'), function (req, res, next) {
+router.get('/roles', passport.authenticate('jwt', { session: false }), allowRoles('administrators', 'managers'), function (req, res, next) {
     res.json({ ok: true });
 });
+
 
 
 module.exports = router;

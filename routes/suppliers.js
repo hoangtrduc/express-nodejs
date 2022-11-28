@@ -7,6 +7,7 @@ mongoose.connect('mongodb://localhost:27017/api-fullstack');
 
 const express = require('express');
 const { findDocuments } = require('../helpers/MongoDbHelper');
+const { aggregate } = require('../models/Category');
 const router = express.Router();
 
 // GET
@@ -95,10 +96,10 @@ router.delete('/:id', function (req, res, next) {
     }
 });
 // question 15
-router.get('/question/15', function (req, res, next) {
+router.get('/questions/15', function (req, res, next) {
     findDocuments({
         query: {
-            name: { $in: ['SONY', 'SAMSUNG', 'TOSHIBA', 'APPLE'] },
+            name: { $in: ['SONY', 'SAMSUNG', 'TOSHIBA', 'APPLE', 'NOKIA'] },
         }
     }, 'suppliers')
         .then((result) => {
@@ -107,6 +108,36 @@ router.get('/question/15', function (req, res, next) {
         .catch((err) => {
             res.status(500).json(err)
         })
+})
+// questions 19
+router.get('/questions/19', function (req, res, next) {
+    const aggregate = [
+        {
+            $lookup: {
+                from: 'products',
+                let: { id: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$$id', '$supplierId'] },
+                        },
+                    },
+                ],
+                as: 'products',
+            }
+        },
+        {
+            $addFields: { numberOfProducts: { $size: '$products' } },
+        },
+
+    ]
+    findDocuments({ aggregate: aggregate }, 'suppliers')
+        .then((result) => {
+            res.json(result);
+        })
+        .catch((err) => {
+            res.status(400).json(err)
+        });
 })
 
 module.exports = router;

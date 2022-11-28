@@ -10,6 +10,27 @@ const express = require('express');
 const router = express.Router();
 
 
+
+const lookupCustomer = {
+    $lookup: {
+        from: 'customers',
+        localField: 'customersId',
+        foreignField: '_id',
+        as: 'customer'
+    },
+};
+
+const lookupEmployee = {
+    $lookup: {
+        from: 'employee',
+        localField: 'employeeId',
+        foreignField: '_id',
+        as: 'employee'
+    },
+};
+
+
+
 // GET
 router.get('/', function (req, res, next) {
     try {
@@ -103,68 +124,63 @@ router.delete('/:id', function (req, res, next) {
 });
 
 
-
-const lookupCustomer = {
-    $lookup: {
-        from: 'customers',
-        localField: 'customerId',
-        foreignField: '_id',
-        as: 'customer',
-    },
-};
-
-const lookupEmployee = {
-    $lookup: {
-        from: 'employee',
-        localField: 'employeeId',
-        foreignField: '_id',
-        as: 'employee',
-    },
-};
-
-
-
-
 // question 7
-router.post('/questions/7', function (req, res, next) {
-    const { status } = req.body;
-
-
-    const query = {
-        status: status,
-    };
-
-    findDocuments({ query }, 'orders')
-        .then((result) => {
-            res.json(result);
-        })
-        .catch((err) => {
-            res.status(500).json(err);
-        })
+router.get('/questions/7', function (req, res, next) {
+    try {
+        const { status } = req.query;
+        Order.find({ status: status }, { createdDate: 1, status: 1, paymentType: 1, orderDetails: 1, customerId: 1 })
+            .populate({ path: 'orderDetails.product', select: { name: 1, price: 1, discount: 1, stock: 1 } })
+            .populate({ path: 'customer', select: 'firstName lastName' })
+            .populate('employee')
+            .then((result) => {
+                res.send(result);
+            })
+            .catch((err) => {
+                res.status(400).send({ message: err.message });
+            });
+    } catch (err) {
+        console.log(err);
+        res.sendStatus(500);
+    }
 });
+
 // question 8
-router.get('/question/8', function (req, res, next) {
-    const today = moment();
-    const query = {
-        $and: [
+router.get('/questions/8', function (req, res, next) {
+    try {
+        const { status, date } = req.query;
+
+        const fromDate = new Date(date);
+        const toDate = new Date(new Date(date).setDate(fromDate.getDate() + 1));
+
+        const compareStatus = { $eq: ['$status', status] };
+        const compareFromDate = { $gte: ['$createdDate', fromDate] };
+        const compareToDate = { $lt: ['$createdDate', toDate] };
+
+        Order.aggregate([
             {
-                status: 'COMPLETED',
+                $match: { $expr: { $and: [compareStatus, compareFromDate, compareToDate] } },
             },
-            {
-                createdDate: new Date(today.format('YYYY-MM-DD')),
-            },
-        ],
-    };
-    findDocuments({ query }, 'orders')
-        .then((result) => {
-            res.json(result);
-        })
-        .catch((err) => {
-            res.status(500).json(err)
-        })
-})
+        ])
+            .project({ _id: 1, status: 1, paymentType: 1, createdDate: 1, orderDetails: 1, employeeId: 1, customerId: 1 })
+            .then((result) => {
+                Order.populate(result, [{ path: 'employee' }, { path: 'customer' }, { path: 'orderDetails.product', select: { name: 0, price: 1, discount: 1 } }])
+                    .then((data) => {
+                        res.send(data);
+                    })
+                    .catch((err) => {
+                        res.status(400).send({ message: err.message });
+                    });
+            })
+            .catch((err) => {
+                res.status(400).send({ message: err.message });
+            });
+    } catch (error) {
+        console.log(err);
+        res.sendStatus(500)
+    }
+});
 // question 9
-router.get('/question/9', function (req, res, next) {
+router.get('/questions/9', function (req, res, next) {
     const query = {
         status: 'CANCELED'
     }
@@ -177,7 +193,7 @@ router.get('/question/9', function (req, res, next) {
         })
 })
 // question 10 
-router.get('/question/10', function (req, res, next) {
+router.get('/questions/10', function (req, res, next) {
     const today = moment();
     const query = {
         $and: [
@@ -243,7 +259,7 @@ router.get('/question/16', function (req, res, next) {
         lookupCustomer,
         lookupEmployee,
         {
-            $addFields: { customer: { $first: '$customer' }, employee: { $employee } },
+            $addFields: { customer: { $first: '$customer' }, employee: { $first: '$employee' } },
         },
     ];
     findDocuments({ query }, 'orders')
@@ -254,7 +270,36 @@ router.get('/question/16', function (req, res, next) {
             res.status(500).json(error);
         });
 })
+// questions 20
+router.get('/question/20', function (req, res, next) {
+    const aggregate = [
+        {
+            $lookup: {
+                from: 'products',
+                localField: 'orderDetails.productId',
+                foreignField: '_id',
+                as: 'products',
+            },
+        },
+        {
+            $unwind: {
+                path: '$products',
+                preserveNullAndEmptyArrays: true,
+            },
+        },
+        {
+            $project: { products: 1 },
+        },
+    ];
 
+    findDocuments({ aggregate: aggregate }, 'orders')
+        .then((result) => {
+            res.json(result)
+        })
+        .catch((error) => {
+            res.status(500).json(error)
+        })
+})
 
 
 module.exports = router;

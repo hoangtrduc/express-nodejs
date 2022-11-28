@@ -4,9 +4,11 @@ const { Category } = require('../models');
 
 // MONGOOSE
 mongoose.connect('mongodb://localhost:27017/api-fullstack');
+const { findDocuments } = require('../helpers/MongoDbHelper')
 
 
 const express = require('express');
+const passport = require('passport');
 const router = express.Router();
 
 
@@ -47,7 +49,7 @@ router.get('/:id', function (req, res, next) {
 
 /* GET users listing. */
 
-router.post('/', function (req, res, next) {
+router.post('/', passport.authenticate('jwt', { session: false }), function (req, res, next) {
     try {
         const data = req.body;
 
@@ -99,6 +101,37 @@ router.delete('/:id', function (req, res, next) {
     } catch (error) {
         res.sendStatus(500);
     }
+});
+
+// questions/ 18
+router.get('/questions/18', function (req, res) {
+    const aggregate = [
+        {
+            $lookup: {
+                from: 'products',
+                let: { id: '$_id' },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ['$$id', '$categoryId'] },
+                        },
+                    },
+                ],
+                as: 'products',
+            },
+        },
+        {
+            $addFields: { numberOfProducts: { $size: '$products' } },
+        },
+    ];
+
+    findDocuments({ aggregate: aggregate }, 'categories')
+        .then((result) => {
+            res.json(result);
+        })
+        .catch((error) => {
+            res.status(400).json(error);
+        });
 });
 
 module.exports = router;
