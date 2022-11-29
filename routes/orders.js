@@ -9,6 +9,7 @@ const { findDocuments } = require('../helpers/MongoDbHelper');
 const express = require('express');
 const router = express.Router();
 
+const passport = require('passport');
 
 
 const lookupCustomer = {
@@ -69,7 +70,7 @@ router.get('/:id', function (req, res, next) {
 });
 
 // POST
-router.post('/', function (req, res, next) {
+router.post('/', passport.authenticate('jwt', { session: false }), function (req, res, next) {
     try {
         const data = req.body;
 

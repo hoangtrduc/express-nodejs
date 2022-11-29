@@ -54,19 +54,20 @@ router.post('/', passport.authenticate('jwt', { session: false }), function (req
         const data = req.body;
 
         const newItem = new Category(data);
+
         newItem
             .save()
             .then((result) => {
                 res.send(result);
             })
             .catch((err) => {
+                console.log(err);
                 res.status(400).send({ message: err.message });
-            })
+            });
     } catch (err) {
         res.sendStatus(500);
     }
 });
-
 // PATCH
 router.patch('/:id', function (req, res, next) {
     try {

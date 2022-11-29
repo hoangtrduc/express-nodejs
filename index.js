@@ -1,7 +1,9 @@
 const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
 const app = express();
 const cors = require('cors');
-const morgan = require('morgan');
+const logger = require('morgan');
 const port = 9000;
 
 const passport = require('passport');
@@ -22,14 +24,21 @@ const customersRouter = require('./routes/customers');
 const employeesRouter = require('./routes/employees');
 const productsRouter = require('./routes/products');
 const ordersRouter = require('./routes/orders');
-const uploadRouter = require('./routes/upload')
+const uploadRouter = require('./routes/upload');
 
 
 const connectDb = require('./Services/connectDBService');
 const { findDocument, findDocuments } = require('./helpers/MongoDbHelper');
 
-// HTTP logger
-app.use(morgan('combined'));
+// Thiếu cái này, đây là cái tội: Ko làm đúng template của thầy ☠️☠️☠️
+app.use(logger('dev'));
+app.use(express.json());
+
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 app.use(
     cors({

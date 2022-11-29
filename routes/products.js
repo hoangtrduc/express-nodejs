@@ -146,6 +146,10 @@ router.get('/questions/1', async (req, res, next) => {
     }
 })
 
+
+
+
+
 // question 2
 router.get('/questions/2', async (req, res, next) => {
     try {

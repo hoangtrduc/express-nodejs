@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
 const yup = require('yup');
 const { validateSchema } = require('../schemas');
@@ -10,34 +10,35 @@ const jwtSettings = require('../constants/jwtSettings');
 const { findDocuments } = require('../helpers/MongoDbHelper')
 
 // req: request
-router.post("/login", (req, res, next) => {
+router.post('/login', (req, res, next) => {
+
+    console.log(req.body);
     const username = req.body.username;
     const password = req.body.password;
 
     console.log('* username: ', username);
     console.log('* password: ', password);
-    if (username === "admin" && password === "123456789") {
-        res.send({ message: "Login success!" });
+    if (username === 'admin' && password === '123456789') {
+        res.send({ message: 'Login success!' });
         return;
     }
 
-    res.status(401).send({ message: "Login failed!" });
+    res.status(401).send({ message: 'Login failed!' });
 });
 
 const loginSchema = yup.object({
     body: yup.object({
         username: yup.string().email().required(),
-        password: yup.string().required(() => {
-            return 'Lỗi...';
-        }),
+        password: yup.string().required(),
     }),
 });
 
-router.post("/login-validate", validateSchema(loginSchema), (req, res, next) => {
+router.post('/login-validate', validateSchema(loginSchema), (req, res, next) => {
     const username = req.body.username;
     const password = req.body.password;
 
-    if (username === "admin@gmail.com" && password === "123456789") {
+
+    if (username === 'admin@gmail.com' && password === '123456789') {
         res.send({ message: 'Login success!' });
         return;
     }
@@ -81,7 +82,6 @@ router.post('/login-jwt', validateSchema(loginSchema), async (req, res, next) =>
         },
     }, 'login');
 
-    console.log(found)
 
     if (found && found.length > 0) {
 

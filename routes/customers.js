@@ -42,7 +42,7 @@ router.get('/:id', function (req, res, next) {
 });
 
 // POST
-router.post('/', function (res, req, next) {
+router.post('/', function (req, res, next) {
     try {
         const data = req.body;
 
@@ -52,13 +52,15 @@ router.post('/', function (res, req, next) {
             .then((result) => {
                 res.send(result);
             })
-            .catch((error) => {
-                res.status(400).send({ message: error.message });
+            .catch((err) => {
+                console.log(err);
+                res.status(400).send({ message: err.message });
             });
     } catch (err) {
         res.sendStatus(500);
     }
 });
+
 
 // PATCH/:id
 router.patch('/:id', function (req, res, next) {
